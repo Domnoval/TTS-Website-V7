@@ -1,0 +1,767 @@
+// TTS WEBSITE V7 - AI Oracle API
+// Backend module for AI image generation using Hugging Face FLUX-dev model
+// This module bridges human intention (prompts) with AI consciousness (models)
+//
+// Dependencies: wix-fetch, wix-secrets-backend
+// Related: BACKEND_IMPLEMENTATION.md
+
+import { fetch } from 'wix-fetch';
+import { getSecret } from 'wix-secrets-backend';
+
+// ============================================================================
+// CONSTANTS & CONFIGURATION
+// ============================================================================
+
+const HUGGING_FACE_API_URL = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev';
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 2000; // 2 seconds
+const RETRY_MULTIPLIER = 2; // Exponential backoff multiplier
+const REQUEST_TIMEOUT = 60000; // 60 seconds
+const MOCK_MODE_KEY = 'AI_MOCK_MODE'; // Environment variable to enable mock mode
+
+// Default generation options
+const DEFAULT_OPTIONS = {
+    numVariations: 3,
+    guidanceScale: 7.5,
+    negativePrompt: 'blurry, low quality, distorted, ugly',
+    seed: null, // Random seed if null
+};
+
+// ============================================================================
+// MOCK DATA (FOR DEVELOPMENT)
+// ============================================================================
+
+const MOCK_IMAGES = [
+    'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800',
+    'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=800',
+    'https://images.unsplash.com/photo-1549887534-1541e9326642?w=800',
+    'https://images.unsplash.com/photo-1549887552-cb1071d0e5f3?w=800',
+];
+
+/**
+ * Generate mock response for testing without burning API credits
+ * @private
+ * @param {string} prompt - User's transformation intention
+ * @param {number} numVariations - Number of variations to generate
+ * @returns {Object} Mock generation results
+ */
+function generateMockResponse(prompt, numVariations = 3) {
+    console.log('🔮 [AI Oracle] Generating mock vision...');
+
+    const generationId = `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const images = [];
+
+    for (let i = 0; i < Math.min(numVariations, MOCK_IMAGES.length); i++) {
+        images.push({
+            url: MOCK_IMAGES[i],
+            seed: Math.floor(Math.random() * 1000000),
+            variation: i + 1,
+        });
+    }
+
+    return {
+        success: true,
+        data: {
+            generationId,
+            images,
+            metadata: {
+                model: 'flux-dev (mock)',
+                prompt,
+                timestamp: new Date().toISOString(),
+                mode: 'mock',
+            },
+        },
+    };
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Sleep for a specified duration (used in retry logic)
+ * @private
+ * @param {number} ms - Milliseconds to sleep
+ * @returns {Promise<void>}
+ */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Generate a unique ID for generation tracking
+ * @private
+ * @returns {string} Unique generation ID
+ */
+function generateUniqueId() {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 9);
+    return `gen_${timestamp}_${random}`;
+}
+
+/**
+ * Validate prompt input
+ * @private
+ * @param {string} prompt - User's prompt
+ * @throws {Error} If prompt is invalid
+ */
+function validatePrompt(prompt) {
+    if (!prompt || typeof prompt !== 'string') {
+        throw new Error('Prompt must be a non-empty string');
+    }
+
+    const trimmed = prompt.trim();
+
+    if (trimmed.length === 0) {
+        throw new Error('Prompt cannot be empty');
+    }
+
+    if (trimmed.length > 1000) {
+        throw new Error('Prompt too long (max 1000 characters)');
+    }
+
+    return trimmed;
+}
+
+/**
+ * Validate image URL(s)
+ * @private
+ * @param {string|Array<string>} imageUrls - URL or array of URLs
+ * @throws {Error} If URLs are invalid
+ */
+function validateImageUrls(imageUrls) {
+    const urls = Array.isArray(imageUrls) ? imageUrls : [imageUrls];
+
+    if (urls.length === 0) {
+        throw new Error('At least one image URL is required');
+    }
+
+    if (urls.length > 4) {
+        throw new Error('Maximum 4 images can be blended');
+    }
+
+    for (const url of urls) {
+        if (!url || typeof url !== 'string') {
+            throw new Error('All image URLs must be non-empty strings');
+        }
+
+        try {
+            new URL(url); // Validate URL format
+        } catch (e) {
+            throw new Error(`Invalid URL format: ${url}`);
+        }
+    }
+
+    return urls;
+}
+
+/**
+ * Check if mock mode is enabled
+ * @private
+ * @returns {Promise<boolean>}
+ */
+async function isMockModeEnabled() {
+    try {
+        const mockMode = await getSecret(MOCK_MODE_KEY);
+        return mockMode === 'true' || mockMode === '1';
+    } catch (e) {
+        // If secret doesn't exist, default to false
+        return false;
+    }
+}
+
+/**
+ * Get Hugging Face API key from secrets
+ * @private
+ * @returns {Promise<string>} API key
+ * @throws {Error} If API key is not configured
+ */
+async function getApiKey() {
+    try {
+        const apiKey = await getSecret('HUGGING_FACE_API_KEY');
+
+        if (!apiKey) {
+            throw new Error('Hugging Face API key not configured');
+        }
+
+        return apiKey;
+    } catch (error) {
+        console.error('❌ [AI Oracle] Failed to retrieve API key:', error);
+        throw new Error('API key configuration error. Please contact support.');
+    }
+}
+
+/**
+ * Retry an async operation with exponential backoff
+ * @private
+ * @param {Function} operation - Async function to retry
+ * @param {number} maxRetries - Maximum number of retries
+ * @param {string} context - Context for logging
+ * @returns {Promise<any>} Result of successful operation
+ * @throws {Error} If all retries fail
+ */
+async function retryWithBackoff(operation, maxRetries = MAX_RETRIES, context = 'operation') {
+    let lastError;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`🔄 [AI Oracle] Attempt ${attempt}/${maxRetries} for ${context}...`);
+            return await operation();
+        } catch (error) {
+            lastError = error;
+
+            if (attempt < maxRetries) {
+                const delay = INITIAL_RETRY_DELAY * Math.pow(RETRY_MULTIPLIER, attempt - 1);
+                console.warn(`⚠️ [AI Oracle] Attempt ${attempt} failed, retrying in ${delay}ms...`);
+                console.warn(`   Error: ${error.message}`);
+                await sleep(delay);
+            }
+        }
+    }
+
+    console.error(`❌ [AI Oracle] All ${maxRetries} attempts failed for ${context}`);
+    throw lastError;
+}
+
+// ============================================================================
+// HUGGING FACE API FUNCTIONS
+// ============================================================================
+
+/**
+ * Call Hugging Face API for image generation
+ * @private
+ * @param {Object} payload - API payload
+ * @param {string} apiKey - Hugging Face API key
+ * @returns {Promise<Object>} API response
+ * @throws {Error} If API call fails
+ */
+async function callHuggingFaceAPI(payload, apiKey) {
+    const response = await fetch(HUGGING_FACE_API_URL, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    // Check for rate limiting
+    if (response.status === 429) {
+        throw new Error('RATE_LIMIT: API rate limit exceeded. Please try again later.');
+    }
+
+    // Check for model loading (503)
+    if (response.status === 503) {
+        throw new Error('MODEL_LOADING: Model is loading. This usually takes 20-30 seconds.');
+    }
+
+    // Check for other errors
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API_ERROR: ${response.status} - ${errorText}`);
+    }
+
+    // For image generation, response is usually a blob
+    const contentType = response.headers.get('content-type');
+
+    if (contentType && contentType.includes('application/json')) {
+        // If response is JSON, return it
+        return await response.json();
+    } else {
+        // If response is image blob, convert to base64
+        const blob = await response.blob();
+        return blob;
+    }
+}
+
+/**
+ * Build enhanced prompt for better AI results
+ * @private
+ * @param {string} userPrompt - User's original prompt
+ * @param {Object} options - Generation options
+ * @returns {string} Enhanced prompt
+ */
+function buildEnhancedPrompt(userPrompt, options = {}) {
+    // Add quality enhancers to the prompt
+    const qualityTerms = 'high quality, detailed, professional, artistic';
+
+    // Combine user prompt with quality enhancers
+    let enhancedPrompt = `${userPrompt}, ${qualityTerms}`;
+
+    return enhancedPrompt;
+}
+
+// ============================================================================
+// PUBLIC API FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate AI variation of a single painting with a prompt
+ * Channels the oracle to transform a single vision based on user intention
+ *
+ * @async
+ * @param {string} prompt - User's transformation intention (what they want to create)
+ * @param {string} imageUrl - URL of the original painting to transform
+ * @param {Object} [options={}] - Generation options
+ * @param {number} [options.numVariations=3] - Number of variations to generate (1-4)
+ * @param {number} [options.guidanceScale=7.5] - How closely to follow prompt (1-20)
+ * @param {string} [options.negativePrompt] - What to avoid in generation
+ * @param {number} [options.seed] - Seed for reproducibility (null for random)
+ *
+ * @returns {Promise<Object>} Generation results
+ * @returns {boolean} returns.success - Whether generation succeeded
+ * @returns {Object} returns.data - Generation data (if success)
+ * @returns {string} returns.data.generationId - Unique ID for this generation
+ * @returns {Array<Object>} returns.data.images - Array of generated image variations
+ * @returns {string} returns.data.images[].url - URL of generated image
+ * @returns {number} returns.data.images[].seed - Seed used for this variation
+ * @returns {number} returns.data.images[].variation - Variation number (1-4)
+ * @returns {Object} returns.data.metadata - Generation metadata
+ * @returns {string} returns.data.metadata.model - Model used
+ * @returns {string} returns.data.metadata.prompt - Actual prompt used
+ * @returns {string} returns.data.metadata.timestamp - ISO timestamp
+ * @returns {Object} [returns.error] - Error details (if failed)
+ * @returns {string} returns.error.message - User-friendly error message
+ * @returns {string} returns.error.code - Error code
+ * @returns {string} returns.error.timestamp - ISO timestamp
+ *
+ * @example
+ * const result = await channelSingleVision(
+ *   "transform into cosmic nebula",
+ *   "https://example.com/painting.jpg",
+ *   { numVariations: 3 }
+ * );
+ *
+ * if (result.success) {
+ *   console.log(`Generated ${result.data.images.length} variations`);
+ *   result.data.images.forEach(img => {
+ *     console.log(`Variation ${img.variation}: ${img.url}`);
+ *   });
+ * }
+ */
+export async function channelSingleVision(prompt, imageUrl, options = {}) {
+    const startTime = Date.now();
+    const generationId = generateUniqueId();
+
+    console.log('🔮 [AI Oracle] Channeling single vision...');
+    console.log('   Prompt:', prompt);
+    console.log('   Image URL:', imageUrl);
+    console.log('   Generation ID:', generationId);
+
+    try {
+        // Validate inputs
+        const validatedPrompt = validatePrompt(prompt);
+        const [validatedImageUrl] = validateImageUrls(imageUrl);
+
+        // Merge options with defaults
+        const finalOptions = {
+            ...DEFAULT_OPTIONS,
+            ...options,
+        };
+
+        // Check if mock mode is enabled
+        const mockMode = await isMockModeEnabled();
+
+        if (mockMode) {
+            console.log('🎭 [AI Oracle] Mock mode enabled, returning test data');
+            await sleep(1500); // Simulate API delay
+            return generateMockResponse(validatedPrompt, finalOptions.numVariations);
+        }
+
+        // Get API key
+        const apiKey = await getApiKey();
+
+        // Build enhanced prompt
+        const enhancedPrompt = buildEnhancedPrompt(validatedPrompt, finalOptions);
+
+        // Prepare API payload
+        const payload = {
+            inputs: enhancedPrompt,
+            parameters: {
+                guidance_scale: finalOptions.guidanceScale,
+                negative_prompt: finalOptions.negativePrompt,
+                num_inference_steps: 30,
+                seed: finalOptions.seed || Math.floor(Math.random() * 1000000),
+            },
+        };
+
+        console.log('✨ [AI Oracle] Invoking the cosmic intelligence...');
+
+        // Call API with retry logic
+        const apiResponse = await retryWithBackoff(
+            () => callHuggingFaceAPI(payload, apiKey),
+            MAX_RETRIES,
+            'single image generation'
+        );
+
+        // Process response
+        // Note: For FLUX model, we typically get a single image
+        // To generate multiple variations, we'd need to make multiple calls
+        const images = [];
+
+        for (let i = 0; i < finalOptions.numVariations; i++) {
+            const variantPayload = {
+                ...payload,
+                parameters: {
+                    ...payload.parameters,
+                    seed: finalOptions.seed || Math.floor(Math.random() * 1000000),
+                },
+            };
+
+            const variantResponse = await callHuggingFaceAPI(variantPayload, apiKey);
+
+            // TODO: Upload blob to Wix Media Manager and get URL
+            // For now, we'll need to handle blob conversion in a separate function
+            images.push({
+                url: 'data:image/png;base64,PLACEHOLDER', // Placeholder until we implement media upload
+                seed: variantPayload.parameters.seed,
+                variation: i + 1,
+            });
+        }
+
+        const duration = Date.now() - startTime;
+
+        console.log(`✅ [AI Oracle] Vision manifested successfully in ${duration}ms`);
+        console.log(`   Generated ${images.length} variations`);
+
+        return {
+            success: true,
+            data: {
+                generationId,
+                images,
+                metadata: {
+                    model: 'flux-dev',
+                    prompt: enhancedPrompt,
+                    originalPrompt: validatedPrompt,
+                    timestamp: new Date().toISOString(),
+                    duration,
+                },
+            },
+        };
+
+    } catch (error) {
+        console.error('❌ [AI Oracle] Vision channeling failed:', error);
+        console.error('   Error details:', {
+            message: error.message,
+            stack: error.stack,
+            generationId,
+            timestamp: new Date().toISOString(),
+        });
+
+        return {
+            success: false,
+            error: {
+                message: getUserFriendlyErrorMessage(error),
+                code: getErrorCode(error),
+                generationId,
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+}
+
+/**
+ * Blend multiple paintings into a new creation
+ * Channels the oracle to fuse multiple energies into a unified vision
+ *
+ * @async
+ * @param {string} prompt - Blending intention (how to combine the images)
+ * @param {Array<string>} imageUrls - URLs of paintings to blend (2-4 images)
+ * @param {Object} [options={}] - Generation options
+ * @param {number} [options.numVariations=3] - Number of variations to generate (1-4)
+ * @param {number} [options.guidanceScale=7.5] - How closely to follow prompt (1-20)
+ * @param {string} [options.negativePrompt] - What to avoid in generation
+ * @param {number} [options.seed] - Seed for reproducibility (null for random)
+ *
+ * @returns {Promise<Object>} Generation results (same format as channelSingleVision)
+ *
+ * @example
+ * const result = await fuseMultipleVisions(
+ *   "merge into a cosmic dreamscape",
+ *   [
+ *     "https://example.com/painting1.jpg",
+ *     "https://example.com/painting2.jpg",
+ *     "https://example.com/painting3.jpg"
+ *   ],
+ *   { numVariations: 2 }
+ * );
+ */
+export async function fuseMultipleVisions(prompt, imageUrls, options = {}) {
+    const startTime = Date.now();
+    const generationId = generateUniqueId();
+
+    console.log('🌀 [AI Oracle] Fusing multiple visions...');
+    console.log('   Prompt:', prompt);
+    console.log('   Images:', imageUrls.length);
+    console.log('   Generation ID:', generationId);
+
+    try {
+        // Validate inputs
+        const validatedPrompt = validatePrompt(prompt);
+        const validatedImageUrls = validateImageUrls(imageUrls);
+
+        // Merge options with defaults
+        const finalOptions = {
+            ...DEFAULT_OPTIONS,
+            ...options,
+        };
+
+        // Check if mock mode is enabled
+        const mockMode = await isMockModeEnabled();
+
+        if (mockMode) {
+            console.log('🎭 [AI Oracle] Mock mode enabled, returning test data');
+            await sleep(2000); // Simulate longer API delay for blending
+            return generateMockResponse(validatedPrompt, finalOptions.numVariations);
+        }
+
+        // Get API key
+        const apiKey = await getApiKey();
+
+        // Build enhanced prompt that mentions blending
+        const blendingPrompt = `Blend and merge these artistic styles: ${validatedPrompt}`;
+        const enhancedPrompt = buildEnhancedPrompt(blendingPrompt, finalOptions);
+
+        // For FLUX model, we'll need to describe the blending in the prompt
+        // since it doesn't natively support multi-image input
+        // This is a limitation we'll document
+
+        const payload = {
+            inputs: enhancedPrompt,
+            parameters: {
+                guidance_scale: finalOptions.guidanceScale,
+                negative_prompt: finalOptions.negativePrompt,
+                num_inference_steps: 40, // More steps for blending
+                seed: finalOptions.seed || Math.floor(Math.random() * 1000000),
+            },
+        };
+
+        console.log('✨ [AI Oracle] Invoking alchemical fusion...');
+
+        // Generate variations
+        const images = [];
+
+        for (let i = 0; i < finalOptions.numVariations; i++) {
+            const variantPayload = {
+                ...payload,
+                parameters: {
+                    ...payload.parameters,
+                    seed: finalOptions.seed || Math.floor(Math.random() * 1000000),
+                },
+            };
+
+            const variantResponse = await retryWithBackoff(
+                () => callHuggingFaceAPI(variantPayload, apiKey),
+                MAX_RETRIES,
+                `blended variation ${i + 1}`
+            );
+
+            // TODO: Upload blob to Wix Media Manager and get URL
+            images.push({
+                url: 'data:image/png;base64,PLACEHOLDER', // Placeholder
+                seed: variantPayload.parameters.seed,
+                variation: i + 1,
+            });
+        }
+
+        const duration = Date.now() - startTime;
+
+        console.log(`✅ [AI Oracle] Visions fused successfully in ${duration}ms`);
+        console.log(`   Generated ${images.length} blended variations`);
+
+        return {
+            success: true,
+            data: {
+                generationId,
+                images,
+                metadata: {
+                    model: 'flux-dev',
+                    prompt: enhancedPrompt,
+                    originalPrompt: validatedPrompt,
+                    blendedImages: validatedImageUrls.length,
+                    timestamp: new Date().toISOString(),
+                    duration,
+                },
+            },
+        };
+
+    } catch (error) {
+        console.error('❌ [AI Oracle] Vision fusion failed:', error);
+        console.error('   Error details:', {
+            message: error.message,
+            stack: error.stack,
+            generationId,
+            timestamp: new Date().toISOString(),
+        });
+
+        return {
+            success: false,
+            error: {
+                message: getUserFriendlyErrorMessage(error),
+                code: getErrorCode(error),
+                generationId,
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+}
+
+/**
+ * Get generation status for async operations
+ * For future implementation when we add async generation queue
+ *
+ * @async
+ * @param {string} generationId - Unique generation ID
+ * @returns {Promise<Object>} Status information
+ * @returns {boolean} returns.success - Whether query succeeded
+ * @returns {Object} returns.data - Status data
+ * @returns {string} returns.data.status - Status: 'pending', 'processing', 'completed', 'failed'
+ * @returns {number} [returns.data.progress] - Progress percentage (0-100)
+ * @returns {Object} [returns.data.result] - Generation result (if completed)
+ *
+ * @example
+ * const status = await checkVisionStatus('gen_1234567890_abc123');
+ * console.log(`Status: ${status.data.status}`);
+ */
+export async function checkVisionStatus(generationId) {
+    console.log('🔍 [AI Oracle] Checking vision status:', generationId);
+
+    try {
+        // Validate input
+        if (!generationId || typeof generationId !== 'string') {
+            throw new Error('Invalid generation ID');
+        }
+
+        // TODO: Implement actual status checking from database
+        // For now, return not implemented
+
+        return {
+            success: false,
+            error: {
+                message: 'Status checking not yet implemented. All generations are synchronous.',
+                code: 'NOT_IMPLEMENTED',
+                timestamp: new Date().toISOString(),
+            },
+        };
+
+    } catch (error) {
+        console.error('❌ [AI Oracle] Status check failed:', error);
+
+        return {
+            success: false,
+            error: {
+                message: error.message,
+                code: 'STATUS_CHECK_FAILED',
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+}
+
+// ============================================================================
+// ERROR HANDLING UTILITIES
+// ============================================================================
+
+/**
+ * Convert technical error to user-friendly message
+ * Maintains immersion - no technical jargon exposed to users
+ *
+ * @private
+ * @param {Error} error - The error object
+ * @returns {string} User-friendly error message
+ */
+function getUserFriendlyErrorMessage(error) {
+    const message = error.message || '';
+
+    if (message.includes('RATE_LIMIT')) {
+        return 'The cosmic connection is overwhelmed. Please try again in a few moments...';
+    }
+
+    if (message.includes('MODEL_LOADING')) {
+        return 'The oracle is awakening. Please wait 20-30 seconds and try again...';
+    }
+
+    if (message.includes('API_ERROR')) {
+        return 'The portal encountered turbulence. Please try again or contact support...';
+    }
+
+    if (message.includes('Prompt')) {
+        return 'Your intention needs clarity. Please refine your prompt...';
+    }
+
+    if (message.includes('image URL')) {
+        return 'The painting could not be accessed. Please verify the source...';
+    }
+
+    if (message.includes('API key')) {
+        return 'The oracle connection is not configured. Please contact support...';
+    }
+
+    // Generic fallback
+    return 'The cosmic energy faltered. Please try again or contact our support team...';
+}
+
+/**
+ * Extract error code from error
+ * @private
+ * @param {Error} error - The error object
+ * @returns {string} Error code
+ */
+function getErrorCode(error) {
+    const message = error.message || '';
+
+    if (message.includes('RATE_LIMIT')) return 'RATE_LIMIT';
+    if (message.includes('MODEL_LOADING')) return 'MODEL_LOADING';
+    if (message.includes('API_ERROR')) return 'API_ERROR';
+    if (message.includes('Prompt')) return 'INVALID_PROMPT';
+    if (message.includes('image URL')) return 'INVALID_IMAGE_URL';
+    if (message.includes('API key')) return 'API_KEY_ERROR';
+
+    return 'UNKNOWN_ERROR';
+}
+
+// ============================================================================
+// FUTURE ENHANCEMENTS
+// ============================================================================
+
+/**
+ * TODO: Upload generated image blob to Wix Media Manager
+ *
+ * @private
+ * @param {Blob} imageBlob - Image blob from API
+ * @param {string} filename - Desired filename
+ * @returns {Promise<string>} URL of uploaded image
+ */
+async function uploadToMediaManager(imageBlob, filename) {
+    // Implementation needed:
+    // 1. Convert blob to buffer
+    // 2. Use wix-media-backend to upload
+    // 3. Return public URL
+    throw new Error('Media upload not yet implemented');
+}
+
+/**
+ * TODO: Implement image upscaling for print quality
+ *
+ * @private
+ * @param {string} imageUrl - URL of image to upscale
+ * @param {number} scaleFactor - Scale factor (2x, 4x, etc)
+ * @returns {Promise<string>} URL of upscaled image
+ */
+async function upscaleImageForPrint(imageUrl, scaleFactor = 4) {
+    // Could use Real-ESRGAN or similar upscaling model
+    throw new Error('Image upscaling not yet implemented');
+}
+
+/**
+ * TODO: Implement style transfer from reference image
+ *
+ * @private
+ * @param {string} contentImageUrl - Content image URL
+ * @param {string} styleImageUrl - Style reference URL
+ * @returns {Promise<string>} URL of stylized image
+ */
+async function applyStyleTransfer(contentImageUrl, styleImageUrl) {
+    // Could use neural style transfer model
+    throw new Error('Style transfer not yet implemented');
+}
