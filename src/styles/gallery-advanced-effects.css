@@ -1,0 +1,776 @@
+/**
+ * TTS WEBSITE V7 - Gallery Advanced Effects
+ *
+ * Futuristic Baroque Cyberpunk Madness:
+ * - Rotating 3D tesseract background
+ * - Particle systems
+ * - Holographic iridescent effects
+ * - VHS glitch transitions
+ * - Baroque ornate frames
+ * - Neon cyberpunk accents
+ * - Mobile optimized (reduced effects)
+ */
+
+/* ============================================================================
+   COLOR PALETTE - Cyberpunk Baroque
+   ============================================================================ */
+:root {
+    /* Cyberpunk Neons */
+    --neon-cyan: #00f0ff;
+    --neon-magenta: #ff00ff;
+    --neon-purple: #8b00ff;
+    --neon-pink: #ff006e;
+    --neon-gold: #ffd700;
+
+    /* Baroque Luxury */
+    --baroque-gold: #d4af37;
+    --baroque-copper: #b87333;
+    --baroque-burgundy: #800020;
+    --baroque-royal-purple: #663399;
+
+    /* Base Colors */
+    --deep-black: #000000;
+    --void-black: #0a0a0f;
+    --charcoal: #1a1a1f;
+    --silver: #c0c0c0;
+
+    /* Holographic Gradients */
+    --holo-gradient: linear-gradient(
+        45deg,
+        #ff00ff 0%,
+        #00f0ff 25%,
+        #ffd700 50%,
+        #ff006e 75%,
+        #8b00ff 100%
+    );
+
+    --glitch-red: #ff0051;
+    --glitch-cyan: #00ffff;
+    --glitch-green: #00ff00;
+}
+
+/* ============================================================================
+   GALLERY CONTAINER - 3D TESSERACT BACKGROUND
+   ============================================================================ */
+#galleryContainer,
+.gallery-container {
+    position: relative;
+    min-height: 100vh;
+    background: var(--void-black);
+    overflow: hidden;
+    perspective: 1000px;
+}
+
+/* Animated Tesseract Background */
+#galleryContainer::before,
+.gallery-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 50% 50%, transparent 40%, var(--void-black) 100%),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 240, 255, 0.03) 2px,
+            rgba(0, 240, 255, 0.03) 4px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 0, 255, 0.03) 2px,
+            rgba(255, 0, 255, 0.03) 4px
+        );
+    animation: tesseractRotate 30s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* 3D Grid Rotating Effect */
+@keyframes tesseractRotate {
+    0% {
+        transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+    }
+    25% {
+        transform: perspective(1000px) rotateY(90deg) rotateX(15deg);
+    }
+    50% {
+        transform: perspective(1000px) rotateY(180deg) rotateX(0deg);
+    }
+    75% {
+        transform: perspective(1000px) rotateY(270deg) rotateX(-15deg);
+    }
+    100% {
+        transform: perspective(1000px) rotateY(360deg) rotateX(0deg);
+    }
+}
+
+/* Scanlines (VHS Effect) */
+#galleryContainer::after,
+.gallery-container::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.1) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 1;
+    animation: scanlines 8s linear infinite;
+}
+
+@keyframes scanlines {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(10px);
+    }
+}
+
+/* ============================================================================
+   PARTICLE SYSTEM - Floating Cosmic Particles
+   ============================================================================ */
+.particle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: var(--neon-cyan);
+    border-radius: 50%;
+    box-shadow:
+        0 0 10px var(--neon-cyan),
+        0 0 20px var(--neon-cyan),
+        0 0 30px rgba(0, 240, 255, 0.5);
+    animation: particleFloat linear infinite;
+    opacity: 0;
+}
+
+/* Different particle colors */
+.particle:nth-child(3n) {
+    background: var(--neon-magenta);
+    box-shadow:
+        0 0 10px var(--neon-magenta),
+        0 0 20px var(--neon-magenta);
+}
+
+.particle:nth-child(3n+1) {
+    background: var(--baroque-gold);
+    box-shadow:
+        0 0 10px var(--baroque-gold),
+        0 0 20px var(--baroque-gold);
+}
+
+.particle:nth-child(3n+2) {
+    background: var(--neon-purple);
+    box-shadow:
+        0 0 10px var(--neon-purple),
+        0 0 20px var(--neon-purple);
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translate(0, 100vh) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), -100vh) scale(1);
+        opacity: 0;
+    }
+}
+
+/* ============================================================================
+   PAINTING ITEMS - Baroque Frames + Holographic Effects
+   ============================================================================ */
+.painting-item,
+#itemContainer,
+.item-container {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Baroque Ornate Frame */
+.painting-item::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: linear-gradient(
+        135deg,
+        var(--baroque-gold) 0%,
+        var(--baroque-copper) 50%,
+        var(--baroque-gold) 100%
+    );
+    border-radius: 8px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    box-shadow:
+        inset 0 0 20px rgba(212, 175, 55, 0.5),
+        0 0 40px rgba(212, 175, 55, 0.3);
+    /* Baroque pattern overlay */
+    background-image:
+        radial-gradient(circle, transparent 20%, rgba(0,0,0,0.2) 20%, rgba(0,0,0,0.2) 80%, transparent 80%, transparent),
+        radial-gradient(circle, transparent 20%, rgba(0,0,0,0.2) 20%, rgba(0,0,0,0.2) 80%, transparent 80%, transparent);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+}
+
+/* Hover: Show baroque frame */
+.painting-item:hover::before {
+    opacity: 1;
+}
+
+/* Holographic Shimmer Layer */
+.painting-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--holo-gradient);
+    background-size: 400% 400%;
+    border-radius: 4px;
+    opacity: 0;
+    mix-blend-mode: screen;
+    transition: opacity 0.4s ease;
+    animation: holoShimmer 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 10;
+}
+
+@keyframes holoShimmer {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Hover: Show holographic effect */
+.painting-item:hover::after {
+    opacity: 0.3;
+}
+
+/* 3D Lift Effect on Hover */
+.painting-item:hover {
+    transform:
+        translateY(-10px)
+        rotateX(5deg)
+        scale(1.02);
+    box-shadow:
+        0 20px 60px rgba(0, 240, 255, 0.4),
+        0 0 80px rgba(255, 0, 255, 0.2),
+        inset 0 0 50px rgba(255, 215, 0, 0.1);
+}
+
+/* Painting Image */
+.painting-image,
+#portfolioImage,
+#image {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+    transition: filter 0.4s ease;
+    position: relative;
+    z-index: 1;
+}
+
+/* Hover: Slight glow */
+.painting-item:hover .painting-image,
+.painting-item:hover #portfolioImage {
+    filter:
+        brightness(1.1)
+        saturate(1.2)
+        drop-shadow(0 0 20px rgba(0, 240, 255, 0.6));
+}
+
+/* ============================================================================
+   SELECTED STATE - Neon Cyberpunk Highlight
+   ============================================================================ */
+.painting-item.selected,
+.painting-item[data-selected="true"] {
+    transform: scale(0.98);
+}
+
+/* Neon Border for Selected */
+.painting-item.selected::before,
+.painting-item[data-selected="true"]::before {
+    opacity: 1;
+    background: linear-gradient(
+        135deg,
+        var(--neon-cyan),
+        var(--neon-magenta),
+        var(--neon-purple),
+        var(--neon-pink),
+        var(--neon-cyan)
+    );
+    background-size: 400% 400%;
+    animation: neonPulse 2s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+    0%, 100% {
+        background-position: 0% 50%;
+        box-shadow:
+            0 0 30px var(--neon-cyan),
+            0 0 60px var(--neon-magenta),
+            inset 0 0 30px rgba(0, 240, 255, 0.3);
+    }
+    50% {
+        background-position: 100% 50%;
+        box-shadow:
+            0 0 60px var(--neon-magenta),
+            0 0 90px var(--neon-purple),
+            inset 0 0 30px rgba(255, 0, 255, 0.3);
+    }
+}
+
+/* ============================================================================
+   GLITCH EFFECT - VHS Nostalgia
+   ============================================================================ */
+.glitch-container {
+    position: relative;
+    overflow: hidden;
+}
+
+/* RGB Split Glitch */
+@keyframes glitchRGB {
+    0% {
+        transform: translate(0);
+        filter: hue-rotate(0deg);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+        filter: hue-rotate(90deg);
+    }
+    40% {
+        transform: translate(2px, -2px);
+        filter: hue-rotate(180deg);
+    }
+    60% {
+        transform: translate(-2px, -2px);
+        filter: hue-rotate(270deg);
+    }
+    80% {
+        transform: translate(2px, 2px);
+        filter: hue-rotate(360deg);
+    }
+    100% {
+        transform: translate(0);
+        filter: hue-rotate(0deg);
+    }
+}
+
+.glitch-active {
+    animation: glitchRGB 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+/* Chromatic Aberration */
+.painting-item.glitch::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    mix-blend-mode: screen;
+    transform: translate(-2px, 0);
+    opacity: 0.5;
+    filter: hue-rotate(90deg);
+}
+
+.painting-item.glitch::after {
+    transform: translate(2px, 0);
+    filter: hue-rotate(-90deg);
+}
+
+/* ============================================================================
+   AI CONTROL PANEL - Floating Cyberpunk Interface
+   ============================================================================ */
+#aiControlPanel,
+.ai-control-panel {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 10, 15, 0.9);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 50px;
+    padding: 15px 30px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    box-shadow:
+        0 0 40px rgba(0, 240, 255, 0.5),
+        0 10px 40px rgba(0, 0, 0, 0.5),
+        inset 0 0 20px rgba(0, 240, 255, 0.1);
+    z-index: 1000;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#aiControlPanel:hover {
+    box-shadow:
+        0 0 60px rgba(0, 240, 255, 0.8),
+        0 15px 60px rgba(0, 0, 0, 0.6),
+        inset 0 0 30px rgba(0, 240, 255, 0.2);
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* AI Buttons - Cyberpunk Style */
+.ai-button,
+#manipulateButton,
+#blendButton,
+#clearSelectionButton {
+    background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+    border: 2px solid var(--neon-pink);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow:
+        0 0 20px rgba(255, 0, 255, 0.5),
+        inset 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.ai-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.ai-button:hover::before {
+    left: 100%;
+}
+
+.ai-button:hover {
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+    border-color: var(--neon-cyan);
+    box-shadow:
+        0 0 40px rgba(0, 240, 255, 0.8),
+        inset 0 0 20px rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.ai-button:active {
+    transform: scale(0.95);
+}
+
+/* ============================================================================
+   MODE TOGGLE BUTTONS - Baroque Ornate Toggles
+   ============================================================================ */
+.mode-toggle-container {
+    position: fixed;
+    top: 100px;
+    right: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 1000;
+}
+
+.mode-button,
+#singleModeButton,
+#multiModeButton {
+    background: rgba(212, 175, 55, 0.1);
+    border: 2px solid var(--baroque-gold);
+    color: var(--baroque-gold);
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-family: 'Georgia', serif;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow:
+        0 0 20px rgba(212, 175, 55, 0.3),
+        inset 0 0 10px rgba(212, 175, 55, 0.1);
+}
+
+.mode-button:hover {
+    background: rgba(212, 175, 55, 0.3);
+    border-color: var(--baroque-copper);
+    box-shadow:
+        0 0 40px rgba(212, 175, 55, 0.6),
+        inset 0 0 20px rgba(212, 175, 55, 0.2);
+    transform: translateX(-5px);
+}
+
+.mode-button.active {
+    background: linear-gradient(135deg, var(--baroque-gold), var(--baroque-copper));
+    color: var(--deep-black);
+    border-color: var(--neon-gold);
+    box-shadow:
+        0 0 40px rgba(255, 215, 0, 0.8),
+        inset 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================================
+   NOTIFICATION BAR - Cyberpunk Alert
+   ============================================================================ */
+#notification,
+#notificationBar,
+.notification {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--neon-cyan);
+    border-radius: 8px;
+    padding: 15px 40px;
+    color: var(--neon-cyan);
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow:
+        0 0 30px rgba(0, 240, 255, 0.6),
+        inset 0 0 15px rgba(0, 240, 255, 0.2);
+    z-index: 10000;
+    animation: notificationSlide 0.4s ease-out;
+}
+
+@keyframes notificationSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ============================================================================
+   GALLERY STATS - HUD Style Display
+   ============================================================================ */
+.gallery-stats {
+    position: fixed;
+    top: 30px;
+    left: 30px;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 8px;
+    padding: 20px;
+    color: var(--neon-cyan);
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow:
+        0 0 20px rgba(0, 240, 255, 0.3),
+        inset 0 0 10px rgba(0, 240, 255, 0.1);
+    z-index: 1000;
+}
+
+.gallery-stats span {
+    display: block;
+    margin: 5px 0;
+    color: var(--baroque-gold);
+}
+
+/* ============================================================================
+   MOBILE OPTIMIZATIONS - Reduced Effects for Performance
+   ============================================================================ */
+@media (max-width: 768px) {
+    /* Disable 3D transforms on mobile */
+    #galleryContainer::before,
+    .gallery-container::before {
+        animation: none;
+        background: var(--void-black);
+    }
+
+    /* Reduce particles */
+    .particle:nth-child(n+20) {
+        display: none;
+    }
+
+    /* Simplify hover effects */
+    .painting-item:hover {
+        transform: scale(1.02);
+        box-shadow: 0 10px 30px rgba(0, 240, 255, 0.3);
+    }
+
+    /* Disable holographic shimmer */
+    .painting-item::after {
+        display: none;
+    }
+
+    /* Simplify control panel */
+    #aiControlPanel {
+        bottom: 20px;
+        padding: 10px 20px;
+        border-radius: 30px;
+    }
+
+    .ai-button {
+        padding: 10px 20px;
+        font-size: 12px;
+    }
+
+    /* Move mode toggles */
+    .mode-toggle-container {
+        top: auto;
+        bottom: 100px;
+        right: 20px;
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .mode-button {
+        padding: 10px 15px;
+        font-size: 11px;
+    }
+}
+
+/* Ultra-low power mode (reduce motion preference) */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01s !important;
+    }
+
+    .particle-container,
+    #galleryContainer::before,
+    #galleryContainer::after {
+        display: none;
+    }
+}
+
+/* ============================================================================
+   LOADING ANIMATIONS
+   ============================================================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Staggered animations for grid */
+.painting-item:nth-child(1) { animation-delay: 0.05s; }
+.painting-item:nth-child(2) { animation-delay: 0.1s; }
+.painting-item:nth-child(3) { animation-delay: 0.15s; }
+.painting-item:nth-child(4) { animation-delay: 0.2s; }
+.painting-item:nth-child(5) { animation-delay: 0.25s; }
+.painting-item:nth-child(6) { animation-delay: 0.3s; }
+
+/* ============================================================================
+   CHROME/METALLIC EFFECTS - Extra Baroque Luxury
+   ============================================================================ */
+.chrome-text {
+    background: linear-gradient(
+        180deg,
+        var(--silver) 0%,
+        var(--baroque-gold) 50%,
+        var(--silver) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+}
+
+/* ============================================================================
+   ENERGY FIELD EFFECT - Around Selected Items
+   ============================================================================ */
+.energy-field {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    border-radius: 12px;
+    background: radial-gradient(
+        circle,
+        transparent 30%,
+        var(--neon-cyan) 70%,
+        transparent 100%
+    );
+    opacity: 0;
+    animation: energyPulse 2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.painting-item.selected .energy-field {
+    opacity: 0.3;
+}
+
+@keyframes energyPulse {
+    0%, 100% {
+        transform: scale(0.9);
+        opacity: 0.2;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.5;
+    }
+}
