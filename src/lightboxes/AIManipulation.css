@@ -1,0 +1,790 @@
+/* TTS WEBSITE V7 - AI Manipulation Modal Styles
+ * The alchemical chamber styling
+ * Glassmorphism + Sacred geometry + Cosmic vibes
+ */
+
+/* ============================================
+   COLOR PALETTE (from UI_DESIGN_SPEC.md)
+   ============================================ */
+
+:root {
+    /* Cosmic Blacks */
+    --cosmic-black-deep: #0A0A0F;
+    --cosmic-black-medium: #141419;
+    --cosmic-black-light: #1E1E28;
+
+    /* Ethereal Whites */
+    --ethereal-white: #FAFAFF;
+    --ethereal-white-dim: #C7C7D4;
+    --ethereal-white-ghost: #8A8A99;
+
+    /* Consciousness Purple */
+    --consciousness-purple: #8B5CF6;
+    --consciousness-purple-deep: #6D28D9;
+    --consciousness-purple-glow: #A78BFA;
+
+    /* Sacred Gold */
+    --sacred-gold: #F59E0B;
+    --sacred-gold-deep: #D97706;
+    --sacred-gold-bright: #FCD34D;
+
+    /* Portal Cyan */
+    --portal-cyan: #06B6D4;
+    --portal-cyan-deep: #0891B2;
+    --portal-cyan-bright: #67E8F9;
+
+    /* Functional Colors */
+    --success-green: #10B981;
+    --warning-amber: #F59E0B;
+    --error-red: #EF4444;
+    --info-blue: #3B82F6;
+
+    /* Opacity Scales */
+    --opacity-ghost: 0.05;
+    --opacity-whisper: 0.10;
+    --opacity-dim: 0.20;
+    --opacity-half: 0.50;
+    --opacity-solid: 0.85;
+
+    /* Typography */
+    --text-xs: 12px;
+    --text-sm: 14px;
+    --text-base: 16px;
+    --text-lg: 18px;
+    --text-xl: 24px;
+    --text-2xl: 32px;
+    --text-3xl: 48px;
+}
+
+/* ============================================
+   MODAL OVERLAY (Full-screen backdrop)
+   ============================================ */
+
+#modalOverlay,
+.ai-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 15, 0.92);
+    backdrop-filter: blur(16px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+#modalOverlay.active,
+.ai-modal-overlay.active {
+    opacity: 1;
+}
+
+/* ============================================
+   MODAL BOX (Main container)
+   ============================================ */
+
+#modalBox,
+.ai-modal {
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: rgba(30, 30, 40, 0.6);
+    backdrop-filter: blur(32px) saturate(180%);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 24px;
+    padding: 48px;
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.6),
+        0 0 100px rgba(139, 92, 246, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.9);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.ai-modal-overlay.active .ai-modal,
+#modalOverlay.active #modalBox {
+    transform: scale(1);
+}
+
+/* Scrollbar styling */
+#modalBox::-webkit-scrollbar,
+.ai-modal::-webkit-scrollbar {
+    width: 8px;
+}
+
+#modalBox::-webkit-scrollbar-track,
+.ai-modal::-webkit-scrollbar-track {
+    background: rgba(20, 20, 25, 0.5);
+    border-radius: 4px;
+}
+
+#modalBox::-webkit-scrollbar-thumb,
+.ai-modal::-webkit-scrollbar-thumb {
+    background: var(--consciousness-purple);
+    border-radius: 4px;
+}
+
+/* ============================================
+   MODAL HEADER
+   ============================================ */
+
+#modalHeader,
+.modal-header {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    color: var(--ethereal-white);
+    text-align: center;
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+}
+
+/* Close button */
+#closeButton,
+.close-button {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    background: rgba(20, 20, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#closeButton:hover,
+.close-button:hover {
+    background: rgba(139, 92, 246, 0.3);
+    border-color: var(--consciousness-purple);
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* ============================================
+   PAINTING PREVIEWS
+   ============================================ */
+
+#previewContainer,
+.preview-container {
+    margin-bottom: 32px;
+    position: relative;
+}
+
+/* Single painting preview */
+#singlePaintingImage,
+.single-painting-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 16px;
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(139, 92, 246, 0.2);
+    animation: floatingImage 6s ease-in-out infinite;
+}
+
+@keyframes floatingImage {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+#singlePaintingTitle,
+.single-painting-title {
+    text-align: center;
+    margin-top: 16px;
+    font-size: var(--text-lg);
+    color: var(--ethereal-white-dim);
+}
+
+/* Multiple paintings preview (blend mode) */
+#multiPaintingContainer,
+.multi-painting-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    padding: 24px;
+    position: relative;
+}
+
+#multiPaintingContainer::after,
+.multi-painting-container::after {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(
+        circle,
+        rgba(139, 92, 246, 0.15) 0%,
+        transparent 70%
+    );
+    border-radius: 24px;
+    z-index: -1;
+    animation: energyPulse 3s ease-in-out infinite;
+}
+
+@keyframes energyPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+.blend-painting-item {
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.blend-painting-item:hover {
+    opacity: 1;
+}
+
+#blendImage,
+.blend-image {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   PROMPT INPUT FIELD
+   ============================================ */
+
+#promptInput,
+.prompt-input {
+    width: 100%;
+    min-height: 120px;
+    padding: 20px;
+    background: rgba(10, 10, 15, 0.6);
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    border-radius: 16px;
+    color: var(--ethereal-white);
+    font-family: 'Inter', sans-serif;
+    font-size: var(--text-base);
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.3s ease;
+    margin-bottom: 24px;
+}
+
+#promptInput:focus,
+.prompt-input:focus {
+    outline: none;
+    border-color: var(--consciousness-purple);
+    box-shadow:
+        0 0 40px rgba(139, 92, 246, 0.3),
+        inset 0 0 20px rgba(139, 92, 246, 0.05);
+}
+
+#promptInput::placeholder,
+.prompt-input::placeholder {
+    color: var(--ethereal-white-ghost);
+    font-style: italic;
+}
+
+/* ============================================
+   PRESET BUTTONS
+   ============================================ */
+
+.preset-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.preset-button,
+#presetCosmic,
+#presetSacred,
+#presetEthereal,
+#presetDark,
+#presetNeon,
+#presetOrganic {
+    padding: 10px 20px;
+    background: rgba(30, 30, 40, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 24px;
+    color: var(--ethereal-white-dim);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.preset-button:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: var(--consciousness-purple);
+    color: var(--ethereal-white);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   GENERATE BUTTON (The Activation Point)
+   ============================================ */
+
+#generateButton,
+.btn-generate {
+    position: relative;
+    width: 100%;
+    padding: 20px 48px;
+    background: linear-gradient(135deg,
+        var(--consciousness-purple) 0%,
+        var(--portal-cyan) 50%,
+        var(--sacred-gold) 100%
+    );
+    background-size: 200% 200%;
+    border: none;
+    border-radius: 16px;
+    color: var(--ethereal-white);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow:
+        0 8px 32px rgba(139, 92, 246, 0.5),
+        0 0 60px rgba(139, 92, 246, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+#generateButton:hover,
+.btn-generate:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+        0 16px 48px rgba(139, 92, 246, 0.7),
+        0 0 80px rgba(139, 92, 246, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Shimmer effect */
+#generateButton::before,
+.btn-generate::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 70%
+    );
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    transition: transform 0.6s ease;
+}
+
+#generateButton:hover::before,
+.btn-generate:hover::before {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+}
+
+/* Loading state */
+#generateButton.loading,
+.btn-generate.loading {
+    pointer-events: none;
+    opacity: 0.8;
+    animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow:
+            0 8px 32px rgba(139, 92, 246, 0.5),
+            0 0 60px rgba(139, 92, 246, 0.3);
+    }
+    50% {
+        box-shadow:
+            0 8px 48px rgba(139, 92, 246, 0.8),
+            0 0 100px rgba(139, 92, 246, 0.6);
+    }
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
+#loadingSpinner,
+.sacred-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid transparent;
+    border-top-color: var(--ethereal-white);
+    border-right-color: var(--consciousness-purple);
+    border-bottom-color: var(--portal-cyan);
+    border-radius: 50%;
+    animation: spinSacred 1.2s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spinSacred {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#loadingText,
+.loading-message {
+    text-align: center;
+    margin-top: 16px;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: var(--text-lg);
+    color: var(--ethereal-white-dim);
+    font-style: italic;
+}
+
+/* ============================================
+   RESULTS SECTION
+   ============================================ */
+
+#resultsContainer,
+.results-container {
+    margin-top: 48px;
+    animation: revealFromBelow 0.6s ease-out;
+}
+
+@keyframes revealFromBelow {
+    0% {
+        opacity: 0;
+        transform: translateY(40px);
+        filter: blur(8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+#successMessage,
+.success-message {
+    text-align: center;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: var(--text-2xl);
+    color: var(--sacred-gold);
+    margin-bottom: 32px;
+    animation: successGlow 2s ease-in-out infinite;
+}
+
+@keyframes successGlow {
+    0%, 100% {
+        text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+    50% {
+        text-shadow: 0 0 40px rgba(245, 158, 11, 0.8);
+    }
+}
+
+/* Results grid */
+#resultsRepeater,
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.result-item {
+    position: relative;
+    background: rgba(20, 20, 25, 0.6);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    transition: all 0.3s ease;
+    animation: revealManifestation 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes revealManifestation {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+        filter: blur(20px);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.1);
+        filter: blur(5px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+}
+
+.result-item:hover {
+    border-color: var(--consciousness-purple);
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+    transform: translateY(-4px);
+}
+
+#variationImage,
+.variation-image {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+#priceText,
+.price-text {
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: var(--text-lg);
+    color: var(--sacred-gold);
+    margin-bottom: 12px;
+}
+
+/* Select button */
+#selectButton,
+.btn-select {
+    width: 100%;
+    padding: 12px 24px;
+    background: linear-gradient(135deg,
+        var(--consciousness-purple),
+        var(--consciousness-purple-deep)
+    );
+    border: none;
+    border-radius: 12px;
+    color: var(--ethereal-white);
+    font-size: var(--text-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#selectButton:hover,
+.btn-select:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.6);
+}
+
+/* ============================================
+   ERROR STATE
+   ============================================ */
+
+#errorContainer,
+.error-container {
+    padding: 20px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--error-red);
+    border-radius: 12px;
+    margin-top: 24px;
+}
+
+#errorText,
+.error-text {
+    color: var(--error-red);
+    font-size: var(--text-base);
+    text-align: center;
+}
+
+/* ============================================
+   NOTIFICATION/TOAST
+   ============================================ */
+
+#notification,
+.notification {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    max-width: 400px;
+    padding: 16px 24px;
+    background: rgba(20, 20, 25, 0.95);
+    backdrop-filter: blur(16px);
+    border-radius: 12px;
+    border-left: 4px solid var(--info-blue);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(59, 130, 246, 0.2);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    z-index: 10000;
+}
+
+#notification.show,
+.notification.show {
+    transform: translateX(0);
+}
+
+#notificationText,
+.notification-text {
+    color: var(--ethereal-white);
+    font-size: var(--text-sm);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE
+   ============================================ */
+
+@media (max-width: 767px) {
+    #modalBox,
+    .ai-modal {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        padding: 24px;
+    }
+
+    #modalHeader,
+    .modal-header {
+        font-size: var(--text-xl);
+        margin-bottom: 24px;
+    }
+
+    #singlePaintingImage,
+    .single-painting-image {
+        max-height: 300px;
+    }
+
+    #multiPaintingContainer,
+    .multi-painting-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+
+    #promptInput,
+    .prompt-input {
+        min-height: 100px;
+        font-size: var(--text-sm);
+    }
+
+    .preset-buttons-container {
+        gap: 8px;
+    }
+
+    .preset-button {
+        padding: 8px 16px;
+        font-size: var(--text-xs);
+    }
+
+    #generateButton,
+    .btn-generate {
+        font-size: var(--text-lg);
+        padding: 16px 32px;
+    }
+
+    #resultsRepeater,
+    .results-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    #notification,
+    .notification {
+        top: 12px;
+        right: 12px;
+        left: 12px;
+        max-width: none;
+    }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - TABLET
+   ============================================ */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    #modalBox,
+    .ai-modal {
+        width: 85%;
+        padding: 40px;
+    }
+
+    #resultsRepeater,
+    .results-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY - REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--consciousness-purple) rgba(20, 20, 25, 0.5);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.hidden {
+    display: none !important;
+}
+
+.collapsed {
+    display: none !important;
+}
+
+.expanded {
+    display: block !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mb-24 {
+    margin-bottom: 24px;
+}
+
+.mt-32 {
+    margin-top: 32px;
+}
+
+/* Glass card effect (utility) */
+.glass-card {
+    background: rgba(30, 30, 40, 0.4);
+    backdrop-filter: blur(12px) saturate(120%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
