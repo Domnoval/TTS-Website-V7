@@ -1,0 +1,160 @@
+{
+  "collectionName": "Portfolio",
+  "displayName": "Portfolio",
+  "description": "Store original paintings available in the gallery",
+  "fields": [
+    {
+      "key": "_id",
+      "type": "text",
+      "description": "Auto-generated unique identifier",
+      "systemField": true
+    },
+    {
+      "key": "_createdDate",
+      "type": "date",
+      "description": "Auto-generated creation timestamp",
+      "systemField": true
+    },
+    {
+      "key": "_updatedDate",
+      "type": "date",
+      "description": "Auto-generated update timestamp",
+      "systemField": true
+    },
+    {
+      "key": "title",
+      "type": "text",
+      "description": "Painting title (e.g., 'Cosmic Dreams')",
+      "required": true
+    },
+    {
+      "key": "description",
+      "type": "richText",
+      "description": "Rich description for SEO and display",
+      "required": false
+    },
+    {
+      "key": "image",
+      "type": "image",
+      "description": "Main high-resolution image (Wix Media URL)",
+      "required": true
+    },
+    {
+      "key": "thumbnail",
+      "type": "text",
+      "description": "Optimized thumbnail URL (400x600)",
+      "required": false
+    },
+    {
+      "key": "category",
+      "type": "text",
+      "description": "Category (e.g., 'Abstract', 'Cosmic', 'Nature')",
+      "required": false
+    },
+    {
+      "key": "tags",
+      "type": "tags",
+      "description": "Tags for categorization (e.g., ['psychedelic', 'geometric'])",
+      "required": false
+    },
+    {
+      "key": "year",
+      "type": "number",
+      "description": "Year created",
+      "required": false
+    },
+    {
+      "key": "price",
+      "type": "number",
+      "description": "Price for original (if available)",
+      "required": false
+    },
+    {
+      "key": "isOriginalAvailable",
+      "type": "boolean",
+      "description": "Can customers buy the physical original?",
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "isPrintAvailable",
+      "type": "boolean",
+      "description": "Can customers order prints?",
+      "required": false,
+      "default": true
+    },
+    {
+      "key": "dimensions",
+      "type": "text",
+      "description": "Physical dimensions (e.g., '24x36 inches')",
+      "required": false
+    },
+    {
+      "key": "medium",
+      "type": "text",
+      "description": "Medium used (e.g., 'Acrylic on canvas')",
+      "required": false
+    },
+    {
+      "key": "status",
+      "type": "text",
+      "description": "Publication status: 'published', 'draft', or 'archived'",
+      "required": false,
+      "default": "draft"
+    },
+    {
+      "key": "dominantColors",
+      "type": "array",
+      "description": "Dominant colors for AI metadata (e.g., ['#FF5733', '#3366FF'])",
+      "required": false
+    },
+    {
+      "key": "styleKeywords",
+      "type": "array",
+      "description": "Style keywords for AI blending (e.g., ['surreal', 'vibrant'])",
+      "required": false
+    },
+    {
+      "key": "sortOrder",
+      "type": "number",
+      "description": "Manual ordering (lower = first)",
+      "required": false,
+      "default": 0
+    },
+    {
+      "key": "isFeatured",
+      "type": "boolean",
+      "description": "Show in featured section",
+      "required": false,
+      "default": false
+    }
+  ],
+  "indexes": [
+    {
+      "name": "status_idx",
+      "fields": ["status"],
+      "description": "Index for querying published items"
+    },
+    {
+      "name": "category_idx",
+      "fields": ["category"],
+      "description": "Index for category filtering"
+    },
+    {
+      "name": "sortOrder_idx",
+      "fields": ["sortOrder"],
+      "description": "Index for display ordering"
+    },
+    {
+      "name": "isFeatured_idx",
+      "fields": ["isFeatured"],
+      "description": "Index for featured items query"
+    }
+  ],
+  "permissions": {
+    "read": "Anyone",
+    "write": "Admin only",
+    "delete": "Admin only",
+    "notes": "Public read access allows gallery to display without authentication. Only admins can create/modify paintings."
+  }
+}

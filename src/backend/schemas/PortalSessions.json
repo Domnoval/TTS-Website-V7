@@ -1,0 +1,88 @@
+{
+  "collectionName": "PortalSessions",
+  "displayName": "Portal Sessions",
+  "description": "Track portal animation state (show once per session)",
+  "fields": [
+    {
+      "key": "_id",
+      "type": "text",
+      "description": "Auto-generated unique identifier",
+      "systemField": true
+    },
+    {
+      "key": "_createdDate",
+      "type": "date",
+      "description": "Session creation timestamp",
+      "systemField": true
+    },
+    {
+      "key": "_updatedDate",
+      "type": "date",
+      "description": "Auto-generated update timestamp",
+      "systemField": true
+    },
+    {
+      "key": "sessionId",
+      "type": "text",
+      "description": "Browser session ID",
+      "required": true
+    },
+    {
+      "key": "hasSeenPortal",
+      "type": "boolean",
+      "description": "True after first portal view",
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "firstVisit",
+      "type": "date",
+      "description": "Timestamp of first visit",
+      "required": false
+    },
+    {
+      "key": "lastVisit",
+      "type": "date",
+      "description": "Timestamp of most recent visit",
+      "required": false
+    },
+    {
+      "key": "visitCount",
+      "type": "number",
+      "description": "Number of visits in this session",
+      "required": false,
+      "default": 0
+    },
+    {
+      "key": "pagesVisited",
+      "type": "array",
+      "description": "Array of page URLs visited (optional tracking)",
+      "required": false
+    },
+    {
+      "key": "aiGenerationsCount",
+      "type": "number",
+      "description": "Number of AI generations in this session (optional tracking)",
+      "required": false,
+      "default": 0
+    }
+  ],
+  "indexes": [
+    {
+      "name": "sessionId_idx",
+      "fields": ["sessionId"],
+      "description": "Index for fast session lookup"
+    },
+    {
+      "name": "lastVisit_idx",
+      "fields": ["lastVisit"],
+      "description": "Index for cleanup of old sessions"
+    }
+  ],
+  "permissions": {
+    "read": "Anyone",
+    "write": "Anyone",
+    "delete": "Admin only",
+    "notes": "Session-based data, anyone can read/write their own session. Auto-cleanup of sessions older than 30 days recommended."
+  }
+}

@@ -2,8 +2,28 @@
 // Backend module for AI image generation using Hugging Face FLUX-dev model
 // This module bridges human intention (prompts) with AI consciousness (models)
 //
-// Dependencies: wix-fetch, wix-secrets-backend
-// Related: BACKEND_IMPLEMENTATION.md
+// Dependencies: wix-fetch, wix-secrets-backend, wix-media-backend
+// Related: BACKEND_IMPLEMENTATION.md, ARCHITECTURE.md
+//
+// EXPORTED FUNCTIONS:
+// - channelSingleVision(prompt, imageUrl, options)    - Generate AI variations of single painting
+// - fuseMultipleVisions(prompt, imageUrls, options)   - Blend multiple paintings
+// - generateSingleImage(prompt, imageUrl, options)    - Alias for channelSingleVision
+// - blendMultipleImages(prompt, imageUrls, options)   - Alias for fuseMultipleVisions
+// - checkVisionStatus(generationId)                   - Check generation status (future)
+// - saveCustomCreation(creationData)                  - Save creation to database
+// - getUserCreations(userId, options)                 - Retrieve user's creations
+// - updateCreationStatus(creationId, updates)         - Update creation record
+//
+// FEATURES:
+// ✅ AI image generation with Hugging Face FLUX-dev
+// ✅ Automatic image upload to Wix Media Manager
+// ✅ Mock mode for development/testing
+// ✅ Error handling with retry logic
+// ✅ Input validation and sanitization
+// ✅ Secure API key management via Wix Secrets
+// ✅ User-friendly error messages
+// ✅ Database persistence for custom creations
 
 import { fetch } from 'wix-fetch';
 import { getSecret } from 'wix-secrets-backend';
@@ -398,7 +418,9 @@ export async function channelSingleVision(prompt, imageUrl, options = {}) {
         // Note: For FLUX model, we typically get a single image
         // To generate multiple variations, we'd need to make multiple calls
         const images = [];
+        const imageVariations = [];
 
+        // Generate all variations first
         for (let i = 0; i < finalOptions.numVariations; i++) {
             const variantPayload = {
                 ...payload,
@@ -408,16 +430,36 @@ export async function channelSingleVision(prompt, imageUrl, options = {}) {
                 },
             };
 
+            console.log(`🎨 [AI Oracle] Generating variation ${i + 1}/${finalOptions.numVariations}...`);
+
             const variantResponse = await callHuggingFaceAPI(variantPayload, apiKey);
 
-            // TODO: Upload blob to Wix Media Manager and get URL
-            // For now, we'll need to handle blob conversion in a separate function
-            images.push({
-                url: 'data:image/png;base64,PLACEHOLDER', // Placeholder until we implement media upload
-                seed: variantPayload.parameters.seed,
+            // Prepare for batch upload
+            imageVariations.push({
+                blob: variantResponse,
+                baseName: `ai_single_${generationId}`,
                 variation: i + 1,
+                seed: variantPayload.parameters.seed,
             });
         }
+
+        // Upload all variations to Wix Media Manager
+        console.log('📤 [AI Oracle] Uploading variations to media storage...');
+        const uploadedImages = await uploadMultipleVariations(imageVariations);
+
+        // Check if any uploads succeeded
+        if (uploadedImages.length === 0) {
+            throw new Error('Failed to upload any generated images to storage');
+        }
+
+        // Use uploaded images
+        uploadedImages.forEach(img => {
+            images.push({
+                url: img.url,
+                seed: img.seed,
+                variation: img.variation,
+            });
+        });
 
         const duration = Date.now() - startTime;
 
@@ -540,7 +582,9 @@ export async function fuseMultipleVisions(prompt, imageUrls, options = {}) {
 
         // Generate variations
         const images = [];
+        const imageVariations = [];
 
+        // Generate all blended variations
         for (let i = 0; i < finalOptions.numVariations; i++) {
             const variantPayload = {
                 ...payload,
@@ -550,19 +594,40 @@ export async function fuseMultipleVisions(prompt, imageUrls, options = {}) {
                 },
             };
 
+            console.log(`🌀 [AI Oracle] Generating blended variation ${i + 1}/${finalOptions.numVariations}...`);
+
             const variantResponse = await retryWithBackoff(
                 () => callHuggingFaceAPI(variantPayload, apiKey),
                 MAX_RETRIES,
                 `blended variation ${i + 1}`
             );
 
-            // TODO: Upload blob to Wix Media Manager and get URL
-            images.push({
-                url: 'data:image/png;base64,PLACEHOLDER', // Placeholder
-                seed: variantPayload.parameters.seed,
+            // Prepare for batch upload
+            imageVariations.push({
+                blob: variantResponse,
+                baseName: `ai_blend_${generationId}`,
                 variation: i + 1,
+                seed: variantPayload.parameters.seed,
             });
         }
+
+        // Upload all blended variations to Wix Media Manager
+        console.log('📤 [AI Oracle] Uploading blended variations to media storage...');
+        const uploadedImages = await uploadMultipleVariations(imageVariations);
+
+        // Check if any uploads succeeded
+        if (uploadedImages.length === 0) {
+            throw new Error('Failed to upload any blended images to storage');
+        }
+
+        // Use uploaded images
+        uploadedImages.forEach(img => {
+            images.push({
+                url: img.url,
+                seed: img.seed,
+                variation: img.variation,
+            });
+        });
 
         const duration = Date.now() - startTime;
 
@@ -721,24 +786,453 @@ function getErrorCode(error) {
 }
 
 // ============================================================================
-// FUTURE ENHANCEMENTS
+// CONVENIENCE ALIASES (Alternative Function Names)
 // ============================================================================
 
 /**
- * TODO: Upload generated image blob to Wix Media Manager
+ * Generate AI variation of a single painting with a prompt
+ * Alias for channelSingleVision() with simplified naming
  *
- * @private
- * @param {Blob} imageBlob - Image blob from API
- * @param {string} filename - Desired filename
- * @returns {Promise<string>} URL of uploaded image
+ * @async
+ * @param {string} prompt - User's transformation intention
+ * @param {string} imageUrl - URL of the original painting
+ * @param {Object} [options={}] - Generation options (see channelSingleVision for details)
+ * @returns {Promise<Object>} Generation results (see channelSingleVision for return format)
+ *
+ * @example
+ * const result = await generateSingleImage(
+ *   "transform into cosmic nebula",
+ *   "https://example.com/painting.jpg"
+ * );
  */
-async function uploadToMediaManager(imageBlob, filename) {
-    // Implementation needed:
-    // 1. Convert blob to buffer
-    // 2. Use wix-media-backend to upload
-    // 3. Return public URL
-    throw new Error('Media upload not yet implemented');
+export async function generateSingleImage(prompt, imageUrl, options = {}) {
+    console.log('🔮 [AI Oracle] generateSingleImage() called (alias for channelSingleVision)');
+    return await channelSingleVision(prompt, imageUrl, options);
 }
+
+/**
+ * Blend multiple paintings into a new creation
+ * Alias for fuseMultipleVisions() with simplified naming
+ *
+ * @async
+ * @param {string} prompt - Blending intention
+ * @param {Array<string>} imageUrls - URLs of paintings to blend (2-4 images)
+ * @param {Object} [options={}] - Generation options (see fuseMultipleVisions for details)
+ * @returns {Promise<Object>} Generation results (see fuseMultipleVisions for return format)
+ *
+ * @example
+ * const result = await blendMultipleImages(
+ *   "merge into a cosmic dreamscape",
+ *   ["https://example.com/painting1.jpg", "https://example.com/painting2.jpg"]
+ * );
+ */
+export async function blendMultipleImages(prompt, imageUrls, options = {}) {
+    console.log('🌀 [AI Oracle] blendMultipleImages() called (alias for fuseMultipleVisions)');
+    return await fuseMultipleVisions(prompt, imageUrls, options);
+}
+
+// ============================================================================
+// IMAGE STORAGE FUNCTIONS
+// ============================================================================
+
+/**
+ * Upload generated image blob to Wix Media Manager
+ * Manifests AI visions into permanent digital storage
+ *
+ * @async
+ * @param {Blob} imageBlob - Image blob from API
+ * @param {string} filename - Desired filename (without extension)
+ * @param {Object} [options={}] - Upload options
+ * @param {string} [options.folder='/ai-generated'] - Folder path in media manager
+ * @param {string} [options.mimeType='image/png'] - MIME type
+ * @returns {Promise<Object>} Upload result with URL and metadata
+ * @returns {boolean} returns.success - Whether upload succeeded
+ * @returns {Object} returns.data - Upload data (if success)
+ * @returns {string} returns.data.fileUrl - Public URL of uploaded image
+ * @returns {string} returns.data.fileName - Final filename
+ * @returns {number} returns.data.width - Image width
+ * @returns {number} returns.data.height - Image height
+ * @returns {number} returns.data.fileSize - File size in bytes
+ * @returns {Object} [returns.error] - Error details (if failed)
+ *
+ * @example
+ * const result = await uploadToMediaManager(imageBlob, 'cosmic_nebula_001');
+ * if (result.success) {
+ *   console.log('Image URL:', result.data.fileUrl);
+ * }
+ */
+async function uploadToMediaManager(imageBlob, filename, options = {}) {
+    const {
+        folder = '/ai-generated',
+        mimeType = 'image/png',
+    } = options;
+
+    try {
+        console.log('💾 [AI Oracle] Uploading image to Wix Media Manager...');
+        console.log('   Filename:', filename);
+        console.log('   Folder:', folder);
+
+        // Validate inputs
+        if (!imageBlob) {
+            throw new Error('Image blob is required');
+        }
+
+        if (!filename) {
+            throw new Error('Filename is required');
+        }
+
+        // Import Wix Media Manager (dynamic import for modularity)
+        const { mediaManager } = await import('wix-media-backend');
+
+        // Convert blob to buffer if needed
+        let imageBuffer;
+        if (imageBlob instanceof ArrayBuffer) {
+            imageBuffer = imageBlob;
+        } else if (imageBlob.arrayBuffer) {
+            imageBuffer = await imageBlob.arrayBuffer();
+        } else {
+            throw new Error('Invalid image blob format');
+        }
+
+        // Generate unique filename with timestamp
+        const timestamp = Date.now();
+        const uniqueFilename = `${filename}_${timestamp}.png`;
+
+        // Upload to Wix Media Manager
+        const uploadResult = await mediaManager.upload(
+            folder,
+            imageBuffer,
+            uniqueFilename,
+            {
+                mediaOptions: {
+                    mimeType,
+                    mediaType: 'image',
+                },
+            }
+        );
+
+        console.log('✅ [AI Oracle] Image uploaded successfully');
+        console.log('   URL:', uploadResult.fileUrl);
+
+        return {
+            success: true,
+            data: {
+                fileUrl: uploadResult.fileUrl,
+                fileName: uploadResult.fileName || uniqueFilename,
+                width: uploadResult.width,
+                height: uploadResult.height,
+                fileSize: uploadResult.sizeInBytes,
+            },
+        };
+
+    } catch (error) {
+        console.error('❌ [AI Oracle] Image upload failed:', error);
+
+        return {
+            success: false,
+            error: {
+                message: error.message || 'Failed to upload image',
+                code: 'UPLOAD_FAILED',
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+}
+
+/**
+ * Upload multiple image variations to Wix Media Manager
+ * Batch upload for efficiency
+ *
+ * @async
+ * @param {Array<Object>} imageVariations - Array of image variations to upload
+ * @param {Blob} imageVariations[].blob - Image blob
+ * @param {string} imageVariations[].baseName - Base filename
+ * @param {number} imageVariations[].variation - Variation number
+ * @param {number} imageVariations[].seed - Seed used for generation
+ * @returns {Promise<Array<Object>>} Array of upload results
+ *
+ * @example
+ * const results = await uploadMultipleVariations([
+ *   { blob: blob1, baseName: 'cosmic', variation: 1, seed: 42 },
+ *   { blob: blob2, baseName: 'cosmic', variation: 2, seed: 123 }
+ * ]);
+ */
+async function uploadMultipleVariations(imageVariations) {
+    console.log(`📦 [AI Oracle] Uploading ${imageVariations.length} variations...`);
+
+    const uploadPromises = imageVariations.map(async (variation, index) => {
+        const filename = `${variation.baseName}_var${variation.variation}_seed${variation.seed}`;
+
+        const result = await uploadToMediaManager(variation.blob, filename);
+
+        if (result.success) {
+            return {
+                url: result.data.fileUrl,
+                seed: variation.seed,
+                variation: variation.variation,
+                fileName: result.data.fileName,
+            };
+        } else {
+            console.error(`Failed to upload variation ${variation.variation}:`, result.error);
+            return null;
+        }
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    // Filter out failed uploads
+    const successfulUploads = results.filter(r => r !== null);
+
+    console.log(`✅ [AI Oracle] Uploaded ${successfulUploads.length}/${imageVariations.length} variations`);
+
+    return successfulUploads;
+}
+
+/**
+ * Save custom AI creation to database with image URLs
+ * Exported for use in other backend modules
+ *
+ * @async
+ * @param {Object} creationData - Creation data to save
+ * @param {string} creationData.userId - User ID or session ID
+ * @param {string} creationData.userEmail - User email
+ * @param {string} creationData.mode - 'manipulate' or 'blend'
+ * @param {Array<string>} creationData.originalPaintingIds - IDs of source paintings
+ * @param {string} creationData.userPrompt - Original user prompt
+ * @param {string} creationData.enhancedPrompt - Enhanced prompt used for generation
+ * @param {Array<Object>} creationData.generatedImages - Array of image objects
+ * @param {Object} creationData.metadata - Additional metadata
+ * @returns {Promise<Object>} Saved creation record
+ *
+ * @example
+ * const result = await saveCustomCreation({
+ *   userId: 'user123',
+ *   mode: 'manipulate',
+ *   originalPaintingIds: ['painting1'],
+ *   userPrompt: 'cosmic nebula',
+ *   enhancedPrompt: 'cosmic nebula, high quality...',
+ *   generatedImages: [{ url: '...', seed: 42, variation: 1 }],
+ *   metadata: { model: 'flux-dev', duration: 15000 }
+ * });
+ */
+export async function saveCustomCreation(creationData) {
+    try {
+        console.log('💫 [AI Oracle] Saving custom creation to database...');
+
+        // Import wixData dynamically
+        const wixData = await import('wix-data');
+
+        // Validate required fields
+        const requiredFields = ['userId', 'mode', 'originalPaintingIds', 'userPrompt'];
+        for (const field of requiredFields) {
+            if (!creationData[field]) {
+                throw new Error(`Missing required field: ${field}`);
+            }
+        }
+
+        // Set expiration (30 days from now)
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+
+        // Prepare record for insertion
+        const recordToInsert = {
+            userId: creationData.userId,
+            userEmail: creationData.userEmail || '',
+            mode: creationData.mode,
+            originalPaintingIds: creationData.originalPaintingIds,
+            userPrompt: creationData.userPrompt,
+            enhancedPrompt: creationData.enhancedPrompt || creationData.userPrompt,
+            generatedImages: creationData.generatedImages || [],
+            generationTime: creationData.metadata?.duration || 0,
+            modelVersion: creationData.metadata?.model || 'flux-dev',
+            status: 'generated',
+            expiresAt,
+            sessionId: creationData.sessionId || null,
+        };
+
+        // Insert into CustomCreations collection
+        const result = await wixData.insert('CustomCreations', recordToInsert);
+
+        console.log('✅ [AI Oracle] Custom creation saved:', result._id);
+
+        return {
+            success: true,
+            data: result,
+        };
+
+    } catch (error) {
+        console.error('❌ [AI Oracle] Failed to save custom creation:', error);
+
+        return {
+            success: false,
+            error: {
+                message: error.message,
+                code: 'DATABASE_ERROR',
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+}
+
+/**
+ * Retrieve user's custom AI creations from database
+ * Exported for use in frontend and other backend modules
+ *
+ * @async
+ * @param {string} userId - User ID or session ID
+ * @param {Object} [options={}] - Query options
+ * @param {number} [options.limit=50] - Maximum number of items to retrieve
+ * @param {string} [options.status] - Filter by status ('generated', 'selected', 'ordered')
+ * @param {string} [options.mode] - Filter by mode ('manipulate', 'blend')
+ * @returns {Promise<Object>} User's creations
+ * @returns {boolean} returns.success - Whether query succeeded
+ * @returns {Object} returns.data - Query results (if success)
+ * @returns {Array<Object>} returns.data.creations - Array of creation objects
+ * @returns {number} returns.data.totalCount - Total number of creations
+ * @returns {Object} [returns.error] - Error details (if failed)
+ *
+ * @example
+ * const result = await getUserCreations('user123', {
+ *   limit: 20,
+ *   status: 'generated'
+ * });
+ *
+ * if (result.success) {
+ *   console.log(`User has ${result.data.totalCount} creations`);
+ *   result.data.creations.forEach(creation => {
+ *     console.log(creation.userPrompt, creation.generatedImages);
+ *   });
+ * }
+ */
+export async function getUserCreations(userId, options = {}) {
+    try {
+        console.log('🔍 [AI Oracle] Retrieving user creations...');
+        console.log('   User ID:', userId);
+
+        // Validate input
+        if (!userId || typeof userId !== 'string') {
+            throw new Error('Valid user ID is required');
+        }
+
+        // Import wixData dynamically
+        const wixData = await import('wix-data');
+
+        // Parse options
+        const {
+            limit = 50,
+            status = null,
+            mode = null,
+        } = options;
+
+        // Build query
+        let query = wixData.query('CustomCreations')
+            .eq('userId', userId)
+            .descending('_createdDate')
+            .limit(limit);
+
+        // Add optional filters
+        if (status) {
+            query = query.eq('status', status);
+        }
+
+        if (mode) {
+            query = query.eq('mode', mode);
+        }
+
+        // Execute query
+        const result = await query.find();
+
+        console.log(`✅ [AI Oracle] Found ${result.items.length} creations`);
+
+        return {
+            success: true,
+            data: {
+                creations: result.items,
+                totalCount: result.totalCount,
+            },
+        };
+
+    } catch (error) {
+        console.error('❌ [AI Oracle] Failed to retrieve creations:', error);
+
+        return {
+            success: false,
+            error: {
+                message: error.message,
+                code: 'QUERY_FAILED',
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+}
+
+/**
+ * Update creation status (e.g., when user selects a variation for ordering)
+ * Exported for use in order management workflows
+ *
+ * @async
+ * @param {string} creationId - Creation ID to update
+ * @param {Object} updates - Fields to update
+ * @param {string} [updates.status] - New status
+ * @param {number} [updates.selectedVariation] - Selected variation number
+ * @param {string} [updates.selectedImageUrl] - Selected image URL
+ * @param {string} [updates.orderId] - Associated order ID
+ * @returns {Promise<Object>} Update result
+ *
+ * @example
+ * const result = await updateCreationStatus('creation123', {
+ *   status: 'selected',
+ *   selectedVariation: 2,
+ *   selectedImageUrl: 'https://...'
+ * });
+ */
+export async function updateCreationStatus(creationId, updates) {
+    try {
+        console.log('📝 [AI Oracle] Updating creation status...');
+        console.log('   Creation ID:', creationId);
+
+        // Validate inputs
+        if (!creationId) {
+            throw new Error('Creation ID is required');
+        }
+
+        if (!updates || typeof updates !== 'object') {
+            throw new Error('Updates object is required');
+        }
+
+        // Import wixData dynamically
+        const wixData = await import('wix-data');
+
+        // Update the creation
+        const result = await wixData.update('CustomCreations', {
+            _id: creationId,
+            ...updates,
+        });
+
+        console.log('✅ [AI Oracle] Creation updated successfully');
+
+        return {
+            success: true,
+            data: result,
+        };
+
+    } catch (error) {
+        console.error('❌ [AI Oracle] Failed to update creation:', error);
+
+        return {
+            success: false,
+            error: {
+                message: error.message,
+                code: 'UPDATE_FAILED',
+                timestamp: new Date().toISOString(),
+            },
+        };
+    }
+}
+
+// ============================================================================
+// FUTURE ENHANCEMENTS
+// ============================================================================
 
 /**
  * TODO: Implement image upscaling for print quality

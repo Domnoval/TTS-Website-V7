@@ -1,0 +1,151 @@
+{
+  "collectionName": "CustomCreations",
+  "displayName": "Custom Creations",
+  "description": "Store AI-generated artwork created by users",
+  "fields": [
+    {
+      "key": "_id",
+      "type": "text",
+      "description": "Auto-generated UUID",
+      "systemField": true
+    },
+    {
+      "key": "_createdDate",
+      "type": "date",
+      "description": "Timestamp of creation",
+      "systemField": true
+    },
+    {
+      "key": "_updatedDate",
+      "type": "date",
+      "description": "Auto-generated update timestamp",
+      "systemField": true
+    },
+    {
+      "key": "userId",
+      "type": "text",
+      "description": "Wix user ID (or session ID for guests)",
+      "required": true
+    },
+    {
+      "key": "userEmail",
+      "type": "text",
+      "description": "User email for notifications and order tracking",
+      "required": false
+    },
+    {
+      "key": "mode",
+      "type": "text",
+      "description": "Generation mode: 'manipulate' or 'blend'",
+      "required": false,
+      "default": "manipulate"
+    },
+    {
+      "key": "originalPaintingIds",
+      "type": "array",
+      "description": "Array of Portfolio item IDs used as source",
+      "required": true
+    },
+    {
+      "key": "userPrompt",
+      "type": "richText",
+      "description": "The prompt entered by user",
+      "required": true
+    },
+    {
+      "key": "enhancedPrompt",
+      "type": "richText",
+      "description": "AI-optimized prompt used for generation",
+      "required": false
+    },
+    {
+      "key": "generatedImages",
+      "type": "array",
+      "description": "Array of generated image variations with metadata",
+      "required": false
+    },
+    {
+      "key": "selectedVariation",
+      "type": "number",
+      "description": "Which variation user selected (1-4)",
+      "required": false
+    },
+    {
+      "key": "selectedImageUrl",
+      "type": "text",
+      "description": "Direct URL to chosen image variation",
+      "required": false
+    },
+    {
+      "key": "status",
+      "type": "text",
+      "description": "Status: 'generated', 'selected', 'order_pending', or 'ordered'",
+      "required": false,
+      "default": "generated"
+    },
+    {
+      "key": "orderId",
+      "type": "text",
+      "description": "Link to Orders collection (after purchase)",
+      "required": false
+    },
+    {
+      "key": "generationTime",
+      "type": "number",
+      "description": "Time taken to generate in milliseconds",
+      "required": false
+    },
+    {
+      "key": "modelVersion",
+      "type": "text",
+      "description": "AI model version used (e.g., 'FLUX-dev-v1.0')",
+      "required": false
+    },
+    {
+      "key": "cost",
+      "type": "number",
+      "description": "API cost for tracking",
+      "required": false
+    },
+    {
+      "key": "sessionId",
+      "type": "text",
+      "description": "Browser session ID for guest users",
+      "required": false
+    },
+    {
+      "key": "expiresAt",
+      "type": "date",
+      "description": "Auto-delete after 30 days if not ordered",
+      "required": false
+    }
+  ],
+  "indexes": [
+    {
+      "name": "userId_idx",
+      "fields": ["userId"],
+      "description": "Index for finding user's creations"
+    },
+    {
+      "name": "status_idx",
+      "fields": ["status"],
+      "description": "Index for querying by status"
+    },
+    {
+      "name": "createdDate_idx",
+      "fields": ["_createdDate"],
+      "description": "Index for chronological ordering"
+    },
+    {
+      "name": "expiresAt_idx",
+      "fields": ["expiresAt"],
+      "description": "Index for cleanup jobs"
+    }
+  ],
+  "permissions": {
+    "read": "Owner or Admin",
+    "write": "Owner or Admin",
+    "delete": "Owner or Admin",
+    "notes": "Users can only read/write their own creations. Admins have full access."
+  }
+}

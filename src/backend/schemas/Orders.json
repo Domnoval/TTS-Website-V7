@@ -1,0 +1,191 @@
+{
+  "collectionName": "Orders",
+  "displayName": "Orders",
+  "description": "Track custom print orders (semi-manual workflow)",
+  "fields": [
+    {
+      "key": "_id",
+      "type": "text",
+      "description": "Auto-generated unique identifier",
+      "systemField": true
+    },
+    {
+      "key": "_createdDate",
+      "type": "date",
+      "description": "Order creation timestamp",
+      "systemField": true
+    },
+    {
+      "key": "_updatedDate",
+      "type": "date",
+      "description": "Auto-generated update timestamp",
+      "systemField": true
+    },
+    {
+      "key": "userId",
+      "type": "text",
+      "description": "Wix user ID of customer",
+      "required": true
+    },
+    {
+      "key": "customerName",
+      "type": "text",
+      "description": "Customer full name",
+      "required": false
+    },
+    {
+      "key": "customerEmail",
+      "type": "text",
+      "description": "Customer email address",
+      "required": true
+    },
+    {
+      "key": "customerPhone",
+      "type": "text",
+      "description": "Customer phone number (optional)",
+      "required": false
+    },
+    {
+      "key": "customCreationId",
+      "type": "text",
+      "description": "Link to CustomCreations collection",
+      "required": true
+    },
+    {
+      "key": "orderType",
+      "type": "text",
+      "description": "Order type: 'custom_print', 'original', or 'merch'",
+      "required": false,
+      "default": "custom_print"
+    },
+    {
+      "key": "printSize",
+      "type": "text",
+      "description": "Print size (e.g., '12x18', '24x36')",
+      "required": false
+    },
+    {
+      "key": "printMaterial",
+      "type": "text",
+      "description": "Print material: 'canvas', 'poster', 'metal', etc.",
+      "required": false
+    },
+    {
+      "key": "isFramed",
+      "type": "boolean",
+      "description": "Is the print framed?",
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "quantity",
+      "type": "number",
+      "description": "Number of prints ordered",
+      "required": false,
+      "default": 1
+    },
+    {
+      "key": "basePrice",
+      "type": "number",
+      "description": "Base price before shipping",
+      "required": false
+    },
+    {
+      "key": "shippingCost",
+      "type": "number",
+      "description": "Shipping cost",
+      "required": false
+    },
+    {
+      "key": "totalPrice",
+      "type": "number",
+      "description": "Total price including shipping",
+      "required": false
+    },
+    {
+      "key": "status",
+      "type": "text",
+      "description": "Status: 'pending', 'printify_created', 'shipped', 'delivered'",
+      "required": false,
+      "default": "pending"
+    },
+    {
+      "key": "printifyProductUrl",
+      "type": "text",
+      "description": "Manual Printify product link",
+      "required": false
+    },
+    {
+      "key": "printifyOrderId",
+      "type": "text",
+      "description": "Printify order ID after creation",
+      "required": false
+    },
+    {
+      "key": "trackingNumber",
+      "type": "text",
+      "description": "Shipping tracking number",
+      "required": false
+    },
+    {
+      "key": "notificationSent",
+      "type": "boolean",
+      "description": "Has admin notification been sent?",
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "purchaseLinkSent",
+      "type": "boolean",
+      "description": "Has purchase link been sent to customer?",
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "purchaseLink",
+      "type": "text",
+      "description": "Link to Printify checkout",
+      "required": false
+    },
+    {
+      "key": "internalNotes",
+      "type": "richText",
+      "description": "Admin notes for fulfillment",
+      "required": false
+    },
+    {
+      "key": "customerNotes",
+      "type": "richText",
+      "description": "Special requests from customer",
+      "required": false
+    }
+  ],
+  "indexes": [
+    {
+      "name": "userId_idx",
+      "fields": ["userId"],
+      "description": "Index for customer order history"
+    },
+    {
+      "name": "status_idx",
+      "fields": ["status"],
+      "description": "Index for filtering by fulfillment stage"
+    },
+    {
+      "name": "customCreationId_idx",
+      "fields": ["customCreationId"],
+      "description": "Index for linking back to creation"
+    },
+    {
+      "name": "createdDate_idx",
+      "fields": ["_createdDate"],
+      "description": "Index for chronological ordering"
+    }
+  ],
+  "permissions": {
+    "read": "Owner or Admin",
+    "write": "Admin only",
+    "delete": "Admin only",
+    "notes": "Customers can read their own orders. Only admins can create/modify/delete orders."
+  }
+}

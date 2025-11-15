@@ -13,5 +13,79 @@
         }
       }
     }
+  },
+  "collections": {
+    "Portfolio": {
+      "read": {
+        "siteOwner": true,
+        "siteMember": true,
+        "anonymous": true
+      },
+      "write": {
+        "siteOwner": true,
+        "siteMember": false,
+        "anonymous": false
+      },
+      "delete": {
+        "siteOwner": true,
+        "siteMember": false,
+        "anonymous": false
+      },
+      "description": "Public read access for gallery display. Only site owners (admins) can create/modify/delete paintings."
+    },
+    "CustomCreations": {
+      "read": {
+        "siteOwner": true,
+        "siteMember": "owner",
+        "anonymous": false
+      },
+      "write": {
+        "siteOwner": true,
+        "siteMember": "owner",
+        "anonymous": false
+      },
+      "delete": {
+        "siteOwner": true,
+        "siteMember": "owner",
+        "anonymous": false
+      },
+      "description": "Users can read/write/delete only their own creations. Site owners have full access to all creations."
+    },
+    "Orders": {
+      "read": {
+        "siteOwner": true,
+        "siteMember": "owner",
+        "anonymous": false
+      },
+      "write": {
+        "siteOwner": true,
+        "siteMember": false,
+        "anonymous": false
+      },
+      "delete": {
+        "siteOwner": true,
+        "siteMember": false,
+        "anonymous": false
+      },
+      "description": "Customers can read their own orders. Only site owners can create/modify/delete orders."
+    },
+    "PortalSessions": {
+      "read": {
+        "siteOwner": true,
+        "siteMember": true,
+        "anonymous": true
+      },
+      "write": {
+        "siteOwner": true,
+        "siteMember": true,
+        "anonymous": true
+      },
+      "delete": {
+        "siteOwner": true,
+        "siteMember": false,
+        "anonymous": false
+      },
+      "description": "Anyone can read/write session data. Only site owners can delete sessions (for cleanup)."
+    }
   }
 }
