@@ -5,7 +5,25 @@
   "scripts": {
     "postinstall": "wix sync-types",
     "dev": "wix dev",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "start": "bash scripts/quickstart.sh",
+    "setup": "bash scripts/setup-env.sh",
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:dev": "bash scripts/deploy.sh dev",
+    "deploy:staging": "bash scripts/deploy.sh staging",
+    "deploy:prod": "bash scripts/deploy.sh production",
+    "test": "bash scripts/test.sh all",
+    "test:schema": "bash scripts/test.sh schema",
+    "test:lint": "bash scripts/test.sh lint",
+    "test:structure": "bash scripts/test.sh structure",
+    "test:docs": "bash scripts/test.sh docs",
+    "test:css": "bash scripts/test.sh css",
+    "db:setup": "node scripts/setup-database.js",
+    "db:validate": "node scripts/setup-database.js --dry-run",
+    "preview": "wix preview",
+    "publish": "wix publish",
+    "build": "wix build",
+    "clean": "rm -rf node_modules package-lock.json && npm install"
   },
   "devDependencies": {
     "@wix/cli": "^1.0.0",
@@ -15,5 +33,23 @@
   },
   "dependencies": {},
   "author": "TTS",
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "art-gallery",
+    "e-commerce",
+    "wix",
+    "velo",
+    "hugging-face",
+    "interactive",
+    "printify"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Domnoval/TTS-Website-V7.git"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
 }
